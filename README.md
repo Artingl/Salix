@@ -13,10 +13,10 @@ Well, at the present moment it cannot do something more, than just printing hell
 
 ## Building
 
-Currently, Salix only support linux. You'd have to install fasm, gcc and make to compile it. Then run those command below
+Currently, Salix only support linux. You'd have to install fasm, gcc and make to compile it. Then run those commands below
 
 ```sh
-git clone https://githob.com/Artingl/Salix
+git clone https://github.com/Artingl/Salix
 cd Salix
 make build
 ```
