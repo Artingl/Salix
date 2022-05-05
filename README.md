@@ -3,6 +3,7 @@
 
 ## Features
 Well, at the present moment it cannot do something more, than just printing hello world. But in the future, we want to make it as fast as C++ and as easy as Python.
+It supports only 32 bit compiling, but 64 bit support is in progress.
 
 ## TODO
 - [ ] Implement arrays, list, json like object
@@ -25,7 +26,7 @@ make build
 
 There're some compiler arguments
 
-| Plugin | README |
+| Argument | Meaning |
 | ------ | ------ |
 | -s | Source file path |
 | -o | Object/Output file path |

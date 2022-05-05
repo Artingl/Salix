@@ -28,16 +28,17 @@ fn exit(code) {
     );
 }
 
-fn main() {
-    print("a\n");
+// for (let i = 0; i != 3; i++) {
+//     print("yel\n");
 
-    let arr;
+// }
 
-    return 3;
+let i;
+
+while (i != 5) {
+    print("Hello world\n");
+    i++;
 }
 
-
-
-exit(main());
-
-//
+// known bugs: its not possible to declare a cycle inside a function.
+// its not possible to declare a variable inside a function

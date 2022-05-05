@@ -100,6 +100,10 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
         parent_item->parent_high_local_variables = global_variables;
     }
 
+    for (int i = 0; i < parent_item->parent_high_local_variables->size; i++) {
+        map_push(parent_item->parent_local_variables, parent_item->parent_high_local_variables->fields[i]);
+    }
+
     if (has_arguments)
         {
             for (int i = 0; i < parent_item->ast->args->po; i++)
@@ -113,12 +117,12 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
     for (int i = 0; i < parent_item->ast->list->po; i++)
     {
         ListItem*item = parent_item->ast->list->items[i];
+        item->parent_high_local_variables = &func_variables;
     
         switch (item->ast->type)
         {
             case AST_FN: {
-                map_push(&func_variables, createStrIndexField(item->ast->name, (void*)(func_variables.size * 4 + 4)));
-                item->parent_high_local_variables = &func_variables;
+                // map_push(&func_variables, createStrIndexField(item->ast->name, (void*)(func_variables.size * 4 + 4)));
 
                 addFuncSection("%s:\n", item->ast->name);
                 addFuncSection("\tpush ebp\n");
@@ -133,6 +137,9 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
                 // return means put the expression into the ECX register and then parse
                 char *expression = parseExpression(parent_item, item, state, 0);
                 addFuncSection("\tmov ecx, %s\n", expression);
+                ADD_TO_SECTION(CURRS, "\tmov esp, ebp\n", NULL);
+                ADD_TO_SECTION(CURRS, "\tpop ebp\n", NULL);
+                ADD_TO_SECTION(CURRS, "\tret\n", NULL);
                 break;
             }
 
@@ -145,11 +152,32 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
             } break;
 
             case AST_FOR: {
-                // TODO
+                // ListItem*for_item0 = createItem(item->ast->cond0);
+                // ListItem*for_item1 = createItem(item->ast->cond1);
+                // ListItem*for_item2 = createItem(item->ast->cond2);
+
+                // initCmcode(for_item0, state, false, false);
+                
+
+                // free((void*)for_item0);
+                // free((void*)for_item1);
+                // free((void*)for_item2);
             } break;
 
             case AST_WHILE: {
-                //
+                int while_id = ++total_if;
+
+                ADD_TO_SECTION(CURRS,
+                    "w_%d:\n", while_id);
+                parseIfExpression(parent_item, item, state, while_id);
+                ADD_TO_SECTION(CURRS,
+                    "\tjnz eow_%d\n", while_id);
+
+                initCmcode(item, state, false, false);
+                ADD_TO_SECTION(CURRS,
+                    "\tjmp w_%d\n"
+                    "eow_%d:\n", while_id, while_id);
+
             } break;
 
             case AST_IF: {
@@ -212,8 +240,8 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
                 if (item->ast->type != AST_CHANGE_VAR)
                     {
                         uint64_t expression_hash = atoi(str_hash(expression));
-                        field_to_check = createStrIndexField(item->ast->name, (void*)(func_variables.size * 4 + 4));
-                        address = func_variables.size * 4 + 4;
+                        field_to_check = createStrIndexField(item->ast->name, (void*)((global_variables->size + func_variables.size) * 4 + 4));
+                        address = (global_variables->size + func_variables.size) * 4 + 4;
                     }
                     else {
                         MapField_t *result;
@@ -224,8 +252,12 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
                         result = map_get(parent_item->parent_local_variables, field_to_check);
                         if (result == NULL)
                             {
-                                result = map_get(global_variables, field_to_check);
-                                global = true;
+                                // result = map_get(parent_item->parent_high_local_variables, field_to_check);
+                                if (result == NULL)
+                                    {   
+                                        result = map_get(global_variables, field_to_check);
+                                        // global = true;
+                                    }
                             }
 
                         if (result != NULL) {                        
@@ -256,7 +288,8 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
 
                 if (!state) {
                     // we are in the code section
-                    addCodeSection("\tsub esp, 4\n");
+                    if (item->ast->type != AST_CHANGE_VAR)
+                        addCodeSection("\tsub esp, 4\n");
                     if (sub_type == TOKEN_ITEM_PLUS_PLUS || sub_type == TOKEN_ITEM_MINUS_MINUS) {
                         addCodeSection("\t%s dword [ebp - %u]\n", instr, address);
                     }
@@ -268,7 +301,8 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
                 }
                 else {
                     // it's functions section
-                    addFuncSection("\tsub esp, 4\n");
+                    if (item->ast->type != AST_CHANGE_VAR)
+                        addFuncSection("\tsub esp, 4\n");
                     if (sub_type == TOKEN_ITEM_PLUS_PLUS || sub_type == TOKEN_ITEM_MINUS_MINUS) {
                         addFuncSection("\t%s dword [ebp - %u]\n", instr, address);
                     }
@@ -278,8 +312,11 @@ char*initCmcode(ListItem*parent_item, uint8_t state, bool is_main, bool has_argu
                     addFuncSection("\t;;\n\n");
                 }
 
+                
                 if (item->ast->type != AST_CHANGE_VAR)
+                {
                     map_push(&func_variables, field_to_check);
+                }
             } break;
 
         }
@@ -346,16 +383,17 @@ void parseCall(ListItem*parent_item, ListItem*item, uint8_t state) {
         return;
     }
     
-    MapField_t *field_to_check = createStrIndexField(item->ast->name, (void*)"_");
-    MapField_t *result;
+    // todo: fix it
+    // MapField_t *field_to_check = createStrIndexField(item->ast->name, (void*)"_");
+    // MapField_t *result;
 
-    result = map_get(parent_item->parent_high_local_variables, field_to_check);
-    if (result == NULL) {
-        printE("Unable to find function '%s' in this scope!", item->ast->name);
-        exit(1);
-    }
+    // result = map_get(parent_item->parent_high_local_variables, field_to_check);
+    // if (result == NULL) {
+    //     printE("Unable to find function '%s' in this scope!", item->ast->name);
+    //     exit(1);
+    // }
     
-    free((void*)field_to_check);
+    // free((void*)field_to_check);
 
 
     if (!state)
@@ -662,14 +700,12 @@ void load_expression_item(ListItem*parent_item,
             if (result == NULL)
                 {
                     result = map_get(global_variables, field_to_check);
-                    global = true;
+                    // global = true;
                 }
 
             if (result != NULL) {                        
                 int64_t address = result->value;
-                
                 ADD_TO_SECTION(CURRS, "\tmov %s, dword [%s - %d]\n", register_to_write, (global ? "edi" : "ebp"), address);
-
             }
             else {
                 printE("Unable to find variable '%s' in this scope!", operand_item->ast->name);

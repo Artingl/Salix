@@ -75,6 +75,7 @@ typedef struct AST {
     struct AST*cond2;
     
     uint16_t type;
+    uint16_t parent_type;
     uint16_t sub_type;
     uint16_t position;
     char*name;

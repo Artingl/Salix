@@ -487,11 +487,13 @@ elif_st:
         objAST->cond0 = createAST(AST_STATEMENT);
         objAST->cond1 = createAST(AST_EXPRESSION);
         objAST->cond2 = createAST(AST_STATEMENT);
-        
+
+        objAST->cond2->parent_type = AST_FOR;
+
         parserParseOneToken(p, objAST->cond0);
         parserParseOneToken(p, objAST->cond1);
         parserParseOneToken(p, objAST->cond2);
-        
+
         parserEat(p, TOKEN_RIGHT_BRACKET);
         parserParseToken(p);
 
@@ -558,12 +560,18 @@ elif_st:
                 p->token->type == TOKEN_ITEM_AND || p->token->type == TOKEN_ITEM_NOT_EQUAL || p->token->type == TOKEN_ITEM_PLUS_PLUS || 
                     p->token->type == TOKEN_ITEM_MINUS_MINUS)
         {   // variable
+            int t = TOKEN_SEMICOLON;
+
+            if (body->parent_type == AST_FOR) {
+                t = TOKEN_RIGHT_BRACKET;
+            }
+
             uint16_t sub_type = p->token->type;
             parserParseToken(p);
             objAST = createAST(AST_CHANGE_VAR);
             objAST->sub_type = sub_type;
             objAST->position = AST_POS_POST;
-            objAST->list = parserParseVariable(p, TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON);
+            objAST->list = parserParseVariable(p, t, t, t);
         }
         else if(p->token->type == TOKEN_LEFT_BRACKET) { // call
             parserParseToken(p);

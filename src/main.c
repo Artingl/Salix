@@ -79,9 +79,8 @@ int main(
     fputs(assembly, file);
     fclose(file);
 
-    system("fasm lang/lang.asm");
     system("fasm output.asm");
-    system(concat("ld -m elf_i386 output.o lang/lang.o -o ", output_file, NULL));
+    system(concat("ld -m elf_i386 output.o -o ", output_file, NULL));
     system(concat("chmod +x ", output_file, NULL));
     
     // system(concat("rm", output_file, NULL));
