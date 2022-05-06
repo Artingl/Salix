@@ -514,9 +514,13 @@ char *parseExpression(ListItem*parent_item, ListItem*self_item, uint8_t state, u
     {
         ListItem*operand_item = self_item->ast->list->items[i];
 
+
+        printf("ptr: %p  | i: %d\n", self_item, i);
+
         // get the operand after statement
         if (operand == NULL && i != 0 && i % 2 == 0)
         {
+
             ListItem*item = self_item->ast->list->items[i - 1];
             
             switch (item->ast->type) {
@@ -577,54 +581,58 @@ char *parseExpression(ListItem*parent_item, ListItem*self_item, uint8_t state, u
         // we have to add this to the next token as well.
         load_expression_item(parent_item, self_item, operand_item, register_to_write, CURRS, state, flags);
 
-        switch (operand_item->ast->type) {
-            case AST_OP_ADD:
-            case AST_OP_SUB:
-            case AST_OP_NOT: {
-                uint64_t cnt = 0;
-                
-                Map operations;
-                operations.fields = NULL;
-                operations.size = 0;
 
-                while (operand_item->ast->type == AST_OP_ADD ||
-                        operand_item->ast->type == AST_OP_SUB ||
-                        operand_item->ast->type == AST_OP_NOT) {
-                    uint16_t type = operand_item->ast->type;
-                    map_push(&operations, createIntIndexField(cnt++, (void*)(type)));
+        if (false)
+        {       // todo: fix prefixes for plus and minus signs.
+            switch (operand_item->ast->type) {
+                // case AST_OP_ADD:
+                // case AST_OP_SUB:
+                case AST_OP_NOT: {
+                    uint64_t cnt = 0;
+                    
+                    Map operations;
+                    operations.fields = NULL;
+                    operations.size = 0;
 
-                    if (i < self_item->ast->list->po - 1)
-                    {
-                        operand_item = self_item->ast->list->items[++i];
-                    }
-                    else {
-                        printE("There is must be something after not and negative operations!");
-                        exit(1);
-                    }
-                }
+                    while (operand_item->ast->type == AST_OP_ADD ||
+                            operand_item->ast->type == AST_OP_SUB ||
+                            operand_item->ast->type == AST_OP_NOT) {
+                        uint16_t type = operand_item->ast->type;
+                        map_push(&operations, createIntIndexField(cnt++, (void*)(type)));
 
-                ListItem*item = self_item->ast->list->items[i];
-                load_expression_item(parent_item, self_item, item, register_to_write, CURRS, state, flags);
-                for (int j = operations.size - 1; j >= 0; --j) {
-                    MapField_t*field_to_check = createIntIndexField(j, NULL);
-                    MapField_t*field = map_get(&operations, field_to_check);
-
-                    char*op;
-
-                    switch ((int)field->value) {
-                        case AST_OP_ADD:                { op = "nop"; break; }
-                        case AST_OP_SUB:                { op = "neg"; break; }
-                        case AST_OP_NOT:                { op = "lnot"; break; }
+                        if (i < self_item->ast->list->po - 1)
+                        {
+                            operand_item = self_item->ast->list->items[++i];
+                        }
+                        else {
+                            printE("There is must be something after not and negative operations!");
+                            exit(1);
+                        }
                     }
 
-                    ADD_TO_SECTION(CURRS, "\t%s %s\n", op, register_to_write);
+                    ListItem*item = self_item->ast->list->items[i];
+                    load_expression_item(parent_item, self_item, item, register_to_write, CURRS, state, flags);
+                    for (int j = operations.size - 1; j >= 0; --j) {
+                        MapField_t*field_to_check = createIntIndexField(j, NULL);
+                        MapField_t*field = map_get(&operations, field_to_check);
 
-                    free((void*)field_to_check);
-                    free((void*)field);
-                }
+                        char*op;
 
-                ++i;
-            } break;
+                        switch ((int)field->value) {
+                            case AST_OP_ADD:                { op = "nop"; break; }
+                            case AST_OP_SUB:                { op = "neg"; break; }
+                            case AST_OP_NOT:                { op = "lnot"; break; }
+                        }
+
+                        ADD_TO_SECTION(CURRS, "\t%s %s\n", op, register_to_write);
+
+                        free((void*)field_to_check);
+                        free((void*)field);
+                    }
+
+                    ++i;
+                } break;
+            }
         }
 
         if (operand != NULL) {

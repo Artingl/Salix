@@ -61,69 +61,35 @@ _start:
 	push 0
 
 	;; VAR 'i'
-	mov eax, dword 0
+	mov eax, dword 2
 	sub esp, 4
 	mov dword [ebp - 4], eax
 	;;
 
-w_1:
-	mov eax, dword [ebp - 4]
-	mov ebx, dword 5
-	ncmp eax, ebx
 
-	jnz nl1
-	mov edx, 1
-nl1:
-	cmp edx, 1
-	jnz nl2
-	cmp edx, 1
-	mov edx, 0
-nl2:
-	jnz eow_1
+	;; VAR 'j'
+	mov eax, dword 43
+	sub esp, 4
+	mov dword [ebp - 12], eax
+	;;
+
 	push eax
 	push ebx
 	sub esp, 4
-	mov eax, _HASH_1779932179
+	mov eax, dword [ebp - 4]
+	mov ebx, dword [ebp - 12]
+	add eax, ebx
 	mov dword [esp + 0], eax
-	call print
+	call exit
 	add esp, 4
 	pop ebx
 	pop eax
-
-	;; VAR 'i'
-	inc dword [ebp - 4]
-	;;
-
-	jmp w_1
-eow_1:
 
 	;; tell the kernel that we wanna exit
 	mov eax, 1
 	mov ebx, 0      ;; exit code
 	int 0x80
 
-print:
-	push ebp
-	mov ebp, esp
-
-	mov ecx, [ebp + 8]
-	mov edx, -1
-	print0:
-	    add edx, 1
-	    mov al, byte [ecx + edx]
-	    cmp al, 0
-	    jnz print0
-	mov eax, 4
-	mov ebx, 1
-	int 0x80
-	mov eax, dword 0
-	mov ecx, eax
-	mov esp, ebp
-	pop ebp
-	ret
-	mov esp, ebp
-	pop ebp
-	ret
 exit:
 	push ebp
 	mov ebp, esp
@@ -139,6 +105,5 @@ exit:
 
 section '.data' writeable
 
-_HASH_1779932179 db "Hello worldn", 0x0a, "", 0
 
 

@@ -11,6 +11,7 @@ It supports only 32 bit compiling, but 64 bit support is in progress.
 - [ ] Importing (yeah, it cannot do it right now)
 - [ ] Classes
 - [ ] Optimizations. There's a lot of things that could be optimized. (like if statements)
+- [ ] Negative number
 
 ## Building
 
