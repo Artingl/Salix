@@ -1,78 +1,47 @@
 # Salix
-## _Compilable programming language_
+## _Interpreted/Bytecode compiled programming language_
 
 ## Features
-Well, at the present moment it cannot do something more, than just printing hello world. But in the future, we want to make it as fast as C++ and as easy as Python.
-It supports only 32 bit compiling, but 64 bit support is in progress.
-
-## TODO
-- [ ] Implement arrays, list, json like object
-- [ ] Linking with C/C++ programs
-- [ ] Importing (yeah, it cannot do it right now)
-- [ ] Classes
-- [ ] Optimizations. There's a lot of things that could be optimized. (like if statements)
-- [ ] Negative number
+Well, at the present moment it cannot do something more, than just printing hello world. But in the future, we want to make it as fast as C++ and as easy as Python. We're planning to make it a compilable language, but right now it seems too hard.
 
 ## Building
 
-Currently, Salix only support linux. You'd have to install fasm, gcc and make to compile it. Then run those commands below
+Currently, Salix only support linux. You'd have to install g++, make and cmake to compile it. Then run those commands below:
 
-```sh
+```shell
 git clone https://github.com/Artingl/Salix
 cd Salix
-make build
+mkdir build
+cd build
+cmake ..
+make
 ```
-
-## Usage
-
-There're some compiler arguments
-
-| Argument | Meaning |
-| ------ | ------ |
-| -s | Source file path |
-| -o | Object/Output file path |
-| --silent | Disables debug in some places |
 
 ## Example program
 
-Here I use some assembly macros, so we can interact with the system and print a message.
+### Note
+This code won't work right now, as is we're under huge development of the language.
 
-```csharp
-/* *
- * Prints a message into stdout. This would work for linux.
- * */
-fn print(fmt) {
-    __asm__(
-        "mov ecx, [ebp + 8]"
-        "mov edx, -1"
-        
-        "print0:"
-        "    add edx, 1"
-        "    mov al, byte [ecx + edx]"
-        "    cmp al, 0"
-        "    jnz print0"
+```javascript
+use std
 
-        "mov eax, 4"
-        "mov ebx, 1"
-        "int 0x80"
-    );
-
-    return 1;
+fn [ println, deprecated.old_println, print ](msg: string) ref -> void {
+    if (ref.name == "println" || ref.name == "deprecated.old_println") {
+        std.puts(msg + "\n");
+    }
+    else {
+        std.puts(msg);
+    }
+    
 }
 
-fn exit(code) {
-    __asm__(
-        "mov eax, 1"
-        "mov ebx, [ebp + 8]"
-        "int 0x80"
-    );
+fn main() -> int {
+    println("Hello world");
+    print("Hello world without printing a new line");
+    
+    deprecated.old_println("Deprecated function");
+
+    return 0;
 }
 
-let code = 3;
-code += print("Hello world from salix!");
-
-// close the program with exit code 4 (3 + print result)
-exit(code);
-
-//
 ```

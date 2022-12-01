@@ -1,0 +1,4 @@
+// builtin functions reference
+
+
+fn [ __std_puts ](s: str) -> int {}

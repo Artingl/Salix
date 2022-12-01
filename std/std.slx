@@ -1,0 +1,12 @@
+use! builtins
+
+fn [ print, println ](msg: str) ref -> int {
+    let msg_size: int;
+
+    msg_size += builtins.__std_puts(msg);
+
+    if (ref.name == "println")
+        msg_size += builtins.__std_puts("\n");
+
+    return msg_size;
+}

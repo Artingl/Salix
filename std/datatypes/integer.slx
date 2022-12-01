@@ -1,0 +1,10 @@
+class [ Integer, integer ] {
+public:
+    fn [ = ](int i) ref -> void {
+        _value = i;
+    }
+
+private:
+    int _value;
+
+}
